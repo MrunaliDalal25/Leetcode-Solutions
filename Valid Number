@@ -1,0 +1,48 @@
+class Solution {
+    public boolean isNumber(String s) {
+
+        s = s.trim();
+
+        boolean seenDigit = false;
+        boolean seenDot = false;
+        boolean seenE = false;
+        boolean digitAfterE = true; // important for exponent validity
+
+        for (int i = 0; i < s.length(); i++) {
+
+            char c = s.charAt(i);
+
+            if (Character.isDigit(c)) {
+                seenDigit = true;
+                digitAfterE = true;
+            }
+
+            else if (c == '.') {
+                // dot not allowed after exponent or twice
+                if (seenDot || seenE) return false;
+                seenDot = true;
+            }
+
+            else if (c == 'e' || c == 'E') {
+                // e must come after a digit and only once
+                if (seenE || !seenDigit) return false;
+
+                seenE = true;
+                digitAfterE = false; // reset for exponent part
+            }
+
+            else if (c == '+' || c == '-') {
+                // sign allowed only at start or after e/E
+                if (i != 0 && s.charAt(i - 1) != 'e' && s.charAt(i - 1) != 'E') {
+                    return false;
+                }
+            }
+
+            else {
+                return false;
+            }
+        }
+
+        return seenDigit && digitAfterE;
+    }
+}
