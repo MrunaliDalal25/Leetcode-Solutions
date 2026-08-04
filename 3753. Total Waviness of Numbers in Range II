@@ -1,0 +1,104 @@
+class Solution {
+
+    private String s;
+    private Map<String, long[]> memo;
+
+    public long totalWaviness(long num1, long num2) {
+        return solve(num2) - solve(num1 - 1);
+    }
+
+    private long solve(long x) {
+        if (x <= 0) return 0;
+
+        s = String.valueOf(x);
+        memo = new HashMap<>();
+
+        long[] res = dfs(0, 1, 0, -1, -1);
+
+        return res[1];
+    }
+
+    private long[] dfs(int pos, int tight,
+                       int started,
+                       int prev2,
+                       int prev1) {
+
+        if (pos == s.length()) {
+            return new long[]{1, 0};
+        }
+
+        String key = pos + "," + tight + "," + started
+                + "," + prev2 + "," + prev1;
+
+        if (tight == 0 && memo.containsKey(key)) {
+            return memo.get(key);
+        }
+
+        int limit = tight == 1
+                ? s.charAt(pos) - '0'
+                : 9;
+
+        long count = 0;
+        long waviness = 0;
+
+        for (int d = 0; d <= limit; d++) {
+
+            int ntight =
+                    (tight == 1 && d == limit) ? 1 : 0;
+
+            if (started == 0 && d == 0) {
+
+                long[] next =
+                        dfs(pos + 1, ntight,
+                                0, -1, -1);
+
+                count += next[0];
+                waviness += next[1];
+
+            } else {
+
+                if (started == 0) {
+
+                    long[] next =
+                            dfs(pos + 1, ntight,
+                                    1, -1, d);
+
+                    count += next[0];
+                    waviness += next[1];
+
+                } else if (prev2 == -1) {
+
+                    long[] next =
+                            dfs(pos + 1, ntight,
+                                    1, prev1, d);
+
+                    count += next[0];
+                    waviness += next[1];
+
+                } else {
+
+                    long add =
+                            ((prev1 > prev2 && prev1 > d) ||
+                             (prev1 < prev2 && prev1 < d))
+                                    ? 1 : 0;
+
+                    long[] next =
+                            dfs(pos + 1, ntight,
+                                    1, prev1, d);
+
+                    count += next[0];
+                    waviness += next[1]
+                            + add * next[0];
+                }
+            }
+        }
+
+        long[] ans = new long[]{count, waviness};
+
+        if (tight == 0) {
+            memo.put(key, ans);
+        }
+
+        return ans;
+    }
+}
