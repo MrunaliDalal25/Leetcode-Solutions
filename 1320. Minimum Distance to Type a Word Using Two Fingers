@@ -1,0 +1,53 @@
+class Solution {
+
+    private String word;
+    private Integer[][][] memo;
+
+    public int minimumDistance(String word) {
+        this.word = word;
+        int n = word.length();
+
+        memo = new Integer[n][27][27];
+
+        return dfs(0, 26, 26);
+    }
+
+    private int dfs(int idx, int f1, int f2) {
+        if (idx == word.length()) {
+            return 0;
+        }
+
+        if (memo[idx][f1][f2] != null) {
+            return memo[idx][f1][f2];
+        }
+
+        int target = word.charAt(idx) - 'A';
+
+        int useFinger1 =
+                distance(f1, target)
+                        + dfs(idx + 1, target, f2);
+
+        int useFinger2 =
+                distance(f2, target)
+                        + dfs(idx + 1, f1, target);
+
+        return memo[idx][f1][f2] =
+                Math.min(useFinger1, useFinger2);
+    }
+
+    private int distance(int from, int to) {
+
+        if (from == 26) {
+            return 0; // free initial placement
+        }
+
+        int r1 = from / 6;
+        int c1 = from % 6;
+
+        int r2 = to / 6;
+        int c2 = to % 6;
+
+        return Math.abs(r1 - r2)
+                + Math.abs(c1 - c2);
+    }
+}
