@@ -1,0 +1,35 @@
+class Solution {
+
+    List<String> list = new ArrayList<>();
+
+    public String getHappyString(int n, int k) {
+
+        backtrack(new StringBuilder(), n);
+
+        if (k > list.size()) {
+            return "";
+        }
+
+        return list.get(k - 1);
+    }
+
+    private void backtrack(StringBuilder sb, int n) {
+
+        if (sb.length() == n) {
+            list.add(sb.toString());
+            return;
+        }
+
+        for (char ch : new char[]{'a', 'b', 'c'}) {
+
+            if (sb.length() > 0 &&
+                sb.charAt(sb.length() - 1) == ch) {
+                continue;
+            }
+
+            sb.append(ch);
+            backtrack(sb, n);
+            sb.deleteCharAt(sb.length() - 1);
+        }
+    }
+}
