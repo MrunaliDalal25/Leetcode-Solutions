@@ -1,0 +1,44 @@
+import java.util.*;
+
+class Solution {
+
+    public List<String> twoEditWords(
+            String[] queries,
+            String[] dictionary) {
+
+        List<String> result = new ArrayList<>();
+
+        for (String query : queries) {
+
+            boolean matched = false;
+
+            for (String word : dictionary) {
+
+                int differences = 0;
+
+                for (int i = 0; i < query.length(); i++) {
+
+                    if (query.charAt(i) != word.charAt(i)) {
+                        differences++;
+                    }
+
+                    // More than 2 edits are not allowed.
+                    if (differences > 2) {
+                        break;
+                    }
+                }
+
+                if (differences <= 2) {
+                    matched = true;
+                    break;
+                }
+            }
+
+            if (matched) {
+                result.add(query);
+            }
+        }
+
+        return result;
+    }
+}
