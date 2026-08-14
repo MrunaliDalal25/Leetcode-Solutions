@@ -1,0 +1,67 @@
+import java.util.*;
+
+class Solution {
+
+    public long[] distance(int[] nums) {
+
+        int n = nums.length;
+
+        long[] ans = new long[n];
+
+        Map<Integer, Long> count = new HashMap<>();
+        Map<Integer, Long> indexSum = new HashMap<>();
+
+        for (int i = 0; i < n; i++) {
+
+            int value = nums[i];
+
+            long previousCount =
+                    count.getOrDefault(value, 0L);
+
+            long previousIndexSum =
+                    indexSum.getOrDefault(value, 0L);
+
+            ans[i] =
+                    previousCount * i
+                    - previousIndexSum;
+
+            count.put(
+                    value,
+                    previousCount + 1
+            );
+
+            indexSum.put(
+                    value,
+                    previousIndexSum + i
+            );
+        }
+
+        count.clear();
+        indexSum.clear();
+
+        for (int i = n - 1; i >= 0; i--) {
+
+            int value = nums[i];
+
+            long nextCount =
+                    count.getOrDefault(value, 0L);
+
+            long nextIndexSum =
+                    indexSum.getOrDefault(value, 0L);
+            ans[i] +=
+                    nextIndexSum
+                    - nextCount * i;
+            count.put(
+                    value,
+                    nextCount + 1
+            );
+
+            indexSum.put(
+                    value,
+                    nextIndexSum + i
+            );
+        }
+
+        return ans;
+    }
+}
