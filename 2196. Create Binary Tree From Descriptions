@@ -1,0 +1,48 @@
+class Solution {
+
+    public TreeNode createBinaryTree(int[][] descriptions) {
+
+        Map<Integer, TreeNode> map = new HashMap<>();
+
+        // Stores all nodes that have a parent
+        Set<Integer> hasParent = new HashSet<>();
+
+        for (int[] description : descriptions) {
+
+            int parentValue = description[0];
+            int childValue = description[1];
+            int isLeft = description[2];
+
+            // Create parent node if it doesn't exist
+            if (!map.containsKey(parentValue)) {
+                map.put(parentValue, new TreeNode(parentValue));
+            }
+
+            // Create child node if it doesn't exist
+            if (!map.containsKey(childValue)) {
+                map.put(childValue, new TreeNode(childValue));
+            }
+
+            TreeNode parent = map.get(parentValue);
+            TreeNode child = map.get(childValue);
+
+            if (isLeft == 1) {
+                parent.left = child;
+            } else {
+                parent.right = child;
+            }
+
+            hasParent.add(childValue);
+        }
+
+        // The root is the node that never had a parent
+        for (int value : map.keySet()) {
+
+            if (!hasParent.contains(value)) {
+                return map.get(value);
+            }
+        }
+
+        return null;
+    }
+}
