@@ -1,0 +1,104 @@
+class Solution {
+
+    public long maximumScore(int[][] grid) {
+
+        int n = grid.length;
+
+        // prefix[j][i] =
+        // sum of grid[0][j] ... grid[i-1][j]
+        long[][] prefix = new long[n][n + 1];
+
+        for (int j = 0; j < n; j++) {
+            for (int i = 0; i < n; i++) {
+                prefix[j][i + 1] =
+                        prefix[j][i] + grid[i][j];
+            }
+        }
+
+        long NEG = Long.MIN_VALUE / 4;
+
+        /*
+         * dp[left][cur]
+         *
+         * left = height of previous column
+         * cur  = height of current column
+         */
+        long[][] dp = new long[n + 1][n + 1];
+
+        for (int i = 0; i <= n; i++) {
+            for (int j = 0; j <= n; j++) {
+                dp[i][j] = NEG;
+            }
+        }
+
+        /*
+         * Before column 0:
+         * imaginary left column has height 0.
+         *
+         * We can choose any height for column 0.
+         */
+        for (int cur = 0; cur <= n; cur++) {
+            dp[0][cur] = 0;
+        }
+
+        /*
+         * Process each column.
+         */
+        for (int col = 0; col < n; col++) {
+
+            long[][] next = new long[n + 1][n + 1];
+
+            for (int i = 0; i <= n; i++) {
+                for (int j = 0; j <= n; j++) {
+                    next[i][j] = NEG;
+                }
+            }
+
+            /*
+             * dp[left][cur]
+             *
+             * Choose right.
+             */
+            for (int left = 0; left <= n; left++) {
+
+                for (int cur = 0; cur <= n; cur++) {
+
+                    if (dp[left][cur] == NEG) {
+                        continue;
+                    }
+
+                    for (int right = 0; right <= n; right++) {
+
+                        int highestNeighbor =
+                                Math.max(left, right);
+
+                        long contribution = 0;
+
+                        if (highestNeighbor > cur) {
+
+                            contribution =
+                                    prefix[col][highestNeighbor]
+                                    - prefix[col][cur];
+                        }
+
+                        next[cur][right] = Math.max(
+                                next[cur][right],
+                                dp[left][cur] + contribution
+                        );
+                    }
+                }
+            }
+
+            dp = next;
+        }
+
+      
+        long answer = 0;
+
+        for (int left = 0; left <= n; left++) {
+            answer = Math.max(answer, dp[left][0]);
+        }
+
+        return answer;
+    }
+}
