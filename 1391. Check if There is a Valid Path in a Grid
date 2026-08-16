@@ -1,0 +1,78 @@
+class Solution {
+
+    // Directions: Up, Right, Down, Left
+    private final int[][] DIRS = {
+        {-1, 0},
+        {0, 1},
+        {1, 0},
+        {0, -1}
+    };
+
+    // For each street type, which directions are connected?
+    // Index: 0 = Up, 1 = Right, 2 = Down, 3 = Left
+    private final int[][] CONNECTIONS = {
+        {},                 // 0 - unused
+        {0, 0, 0, 1},       // 1 - Left, Right
+        {1, 0, 1, 0},       // 2 - Up, Down
+        {0, 0, 1, 1},       // 3 - Left, Down
+        {0, 1, 1, 0},       // 4 - Right, Down
+        {1, 0, 0, 1},       // 5 - Left, Up
+        {1, 1, 0, 0}        // 6 - Right, Up
+    };
+
+    public boolean hasValidPath(int[][] grid) {
+        int m = grid.length;
+        int n = grid[0].length;
+
+        boolean[][] visited = new boolean[m][n];
+
+        return dfs(grid, 0, 0, visited);
+    }
+
+    private boolean dfs(int[][] grid, int r, int c, boolean[][] visited) {
+
+        int m = grid.length;
+        int n = grid[0].length;
+
+        // Destination reached
+        if (r == m - 1 && c == n - 1) {
+            return true;
+        }
+
+        visited[r][c] = true;
+
+        int street = grid[r][c];
+
+        for (int d = 0; d < 4; d++) {
+
+            // Current street does not connect in this direction
+            if (CONNECTIONS[street][d] == 0) {
+                continue;
+            }
+
+            int nr = r + DIRS[d][0];
+            int nc = c + DIRS[d][1];
+
+            // Outside grid
+            if (nr < 0 || nr >= m || nc < 0 || nc >= n) {
+                continue;
+            }
+
+            if (visited[nr][nc]) {
+                continue;
+            }
+
+            int opposite = (d + 2) % 4;
+
+            if (CONNECTIONS[grid[nr][nc]][opposite] == 0) {
+                continue;
+            }
+
+            if (dfs(grid, nr, nc, visited)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
