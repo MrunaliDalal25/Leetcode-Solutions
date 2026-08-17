@@ -1,0 +1,106 @@
+class Solution {
+
+    public int maximumAmount(int[][] coins) {
+
+        int m = coins.length;
+        int n = coins[0].length;
+
+        // dp[i][j][k]
+        // k = number of neutralizations used
+        int[][][] dp = new int[m][n][3];
+
+        // Since the answer can be negative,
+        // initialize everything to a very small value.
+        int NEG = Integer.MIN_VALUE / 2;
+
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                for (int k = 0; k < 3; k++) {
+                    dp[i][j][k] = NEG;
+                }
+            }
+        }
+
+        // Starting cell
+        dp[0][0][0] = coins[0][0];
+
+        // We can also neutralize the starting cell
+        if (coins[0][0] < 0) {
+            dp[0][0][1] = 0;
+        }
+
+        for (int i = 0; i < m; i++) {
+
+            for (int j = 0; j < n; j++) {
+
+                // Skip starting cell
+                if (i == 0 && j == 0) {
+                    continue;
+                }
+
+                for (int k = 0; k < 3; k++) {
+
+                    // Best previous value with k
+                    // neutralizations already used
+                    int bestPrevious = NEG;
+
+                    if (i > 0) {
+                        bestPrevious = Math.max(
+                            bestPrevious,
+                            dp[i - 1][j][k]
+                        );
+                    }
+
+                    if (j > 0) {
+                        bestPrevious = Math.max(
+                            bestPrevious,
+                            dp[i][j - 1][k]
+                        );
+                    }
+
+                    // Don't neutralize current cell
+                    if (bestPrevious != NEG) {
+                        dp[i][j][k] =
+                            bestPrevious + coins[i][j];
+                    }
+
+                    // Neutralize current robber
+                    if (coins[i][j] < 0 && k > 0) {
+
+                        int previousWithoutNeutralization = NEG;
+
+                        if (i > 0) {
+                            previousWithoutNeutralization =
+                                Math.max(
+                                    previousWithoutNeutralization,
+                                    dp[i - 1][j][k - 1]
+                                );
+                        }
+
+                        if (j > 0) {
+                            previousWithoutNeutralization =
+                                Math.max(
+                                    previousWithoutNeutralization,
+                                    dp[i][j - 1][k - 1]
+                                );
+                        }
+
+                        dp[i][j][k] = Math.max(
+                            dp[i][j][k],
+                            previousWithoutNeutralization
+                        );
+                    }
+                }
+            }
+        }
+
+        // We may finish using 0, 1, or 2 neutralizations.
+        return Math.max(
+            dp[m - 1][n - 1][0],
+            Math.max(
+                dp[m - 1][n - 1][1],
+                dp[m - 1][n - 1][2]
+            )
+        );
+    }
+}
