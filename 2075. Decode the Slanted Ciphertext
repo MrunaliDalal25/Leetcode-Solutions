@@ -1,0 +1,39 @@
+class Solution {
+    public String decodeCiphertext(String encodedText, int rows) {
+
+        int n = encodedText.length();
+
+        if (rows == 1) {
+            return encodedText;
+        }
+
+        int cols = n / rows;
+
+        StringBuilder result = new StringBuilder();
+
+        for (int startCol = 0; startCol < cols; startCol++) {
+
+            int row = 0;
+            int col = startCol;
+
+            while (row < rows && col < cols) {
+
+                int index = row * cols + col;
+
+                result.append(encodedText.charAt(index));
+
+                row++;
+                col++;
+            }
+        }
+
+        // Remove trailing spaces
+        while (result.length() > 0 &&
+               result.charAt(result.length() - 1) == ' ') {
+
+            result.deleteCharAt(result.length() - 1);
+        }
+
+        return result.toString();
+    }
+}
