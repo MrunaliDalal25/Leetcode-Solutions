@@ -1,0 +1,242 @@
+import java.util.*;
+
+class Solution {
+
+    public int maxWalls(int[] robots, int[] distance, int[] walls) {
+
+        int n = robots.length;
+
+        int[][] r = new int[n][2];
+
+        for (int i = 0; i < n; i++) {
+            r[i][0] = robots[i];
+            r[i][1] = distance[i];
+        }
+        Arrays.sort(r, Comparator.comparingInt(a -> a[0]));
+
+        Arrays.sort(walls);
+
+        int base = 0;
+
+        for (int[] robot : r) {
+            if (binarySearch(walls, robot[0])) {
+                base++;
+            }
+        }
+
+       
+
+        int dpL = 0;
+        int dpR = 0;
+
+    
+
+        int firstPos = r[0][0];
+        int firstReach = firstPos - r[0][1];
+
+        int leftWalls = countRange(
+                walls,
+                firstReach,
+                firstPos - 1
+        );
+
+       
+
+        dpL = leftWalls;
+        dpR = 0;
+      
+
+        for (int i = 0; i < n - 1; i++) {
+
+            int leftRobot = r[i][0];
+            int rightRobot = r[i + 1][0];
+
+            int leftDistance = r[i][1];
+            int rightDistance = r[i + 1][1];
+
+            // Walls destroyed by left robot shooting RIGHT
+            int rightEnd = Math.min(
+                    leftRobot + leftDistance,
+                    rightRobot - 1
+            );
+
+            int rightShot = countRange(
+                    walls,
+                    leftRobot + 1,
+                    rightEnd
+            );
+
+            // Walls destroyed by right robot shooting LEFT
+            int leftStart = Math.max(
+                    rightRobot - rightDistance,
+                    leftRobot + 1
+            );
+
+            int leftShot = countRange(
+                    walls,
+                    leftStart,
+                    rightRobot - 1
+            );
+
+            // Walls destroyed by BOTH shots
+            int unionShot = countRange(
+                    walls,
+                    Math.min(leftRobot + 1, leftStart),
+                    Math.max(rightEnd, rightRobot - 1)
+            );
+
+          
+
+            int overlapStart = Math.max(
+                    leftRobot + 1,
+                    leftStart
+            );
+
+            int overlapEnd = Math.min(
+                    rightEnd,
+                    rightRobot - 1
+            );
+
+            int overlap = 0;
+
+            if (overlapStart <= overlapEnd) {
+                overlap = countRange(
+                        walls,
+                        overlapStart,
+                        overlapEnd
+                );
+            }
+
+            int both = rightShot + leftShot - overlap;
+
+            /*
+             * New DP states:
+             *
+             * next robot shoots LEFT:
+             *   previous LEFT  -> only leftShot
+             *   previous RIGHT -> both
+             *
+             * next robot shoots RIGHT:
+             *   previous LEFT  -> nothing in this gap
+             *   previous RIGHT -> rightShot
+             */
+
+            int nextL = Math.max(
+                    dpL + leftShot,
+                    dpR + both
+            );
+
+            int nextR = Math.max(
+                    dpL,
+                    dpR + rightShot
+            );
+
+            dpL = nextL;
+            dpR = nextR;
+        }
+
+        // ----------------------------------------------------
+        // Walls to the RIGHT of the last robot
+        // ----------------------------------------------------
+
+        int lastPos = r[n - 1][0];
+
+        int lastReach = lastPos + r[n - 1][1];
+
+        int rightWalls = countRange(
+                walls,
+                lastPos + 1,
+                lastReach
+        );
+
+        /*
+         * If last robot shoots LEFT, it doesn't affect
+         * the outside-right region.
+         *
+         * If it shoots RIGHT, it does.
+         */
+
+        int answer = Math.max(
+                dpL,
+                dpR + rightWalls
+        );
+
+        return base + answer;
+    }
+
+    // Count values in [left, right]
+    private int countRange(int[] arr, int left, int right) {
+
+        if (left > right) {
+            return 0;
+        }
+
+        int first = lowerBound(arr, left);
+        int last = upperBound(arr, right);
+
+        return last - first;
+    }
+
+    // First index where arr[index] >= target
+    private int lowerBound(int[] arr, int target) {
+
+        int lo = 0;
+        int hi = arr.length;
+
+        while (lo < hi) {
+
+            int mid = lo + (hi - lo) / 2;
+
+            if (arr[mid] >= target) {
+                hi = mid;
+            } else {
+                lo = mid + 1;
+            }
+        }
+
+        return lo;
+    }
+
+    // First index where arr[index] > target
+    private int upperBound(int[] arr, int target) {
+
+        int lo = 0;
+        int hi = arr.length;
+
+        while (lo < hi) {
+
+            int mid = lo + (hi - lo) / 2;
+
+            if (arr[mid] > target) {
+                hi = mid;
+            } else {
+                lo = mid + 1;
+            }
+        }
+
+        return lo;
+    }
+
+    private boolean binarySearch(int[] arr, int target) {
+
+        int lo = 0;
+        int hi = arr.length - 1;
+
+        while (lo <= hi) {
+
+            int mid = lo + (hi - lo) / 2;
+
+            if (arr[mid] == target) {
+                return true;
+            }
+
+            if (arr[mid] < target) {
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
+            }
+        }
+
+        return false;
+    }
+}
