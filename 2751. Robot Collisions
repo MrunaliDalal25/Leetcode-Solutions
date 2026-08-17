@@ -1,0 +1,106 @@
+import java.util.*;
+
+class Solution {
+
+    static class Robot {
+        int index;
+        int position;
+        int health;
+        char direction;
+
+        Robot(int index, int position, int health, char direction) {
+            this.index = index;
+            this.position = position;
+            this.health = health;
+            this.direction = direction;
+        }
+    }
+
+    public List<Integer> survivedRobotsHealths(
+            int[] positions,
+            int[] healths,
+            String directions) {
+
+        int n = positions.length;
+
+        Robot[] robots = new Robot[n];
+
+        for (int i = 0; i < n; i++) {
+            robots[i] = new Robot(
+                    i,
+                    positions[i],
+                    healths[i],
+                    directions.charAt(i)
+            );
+        }
+
+        // Sort robots by their position
+        Arrays.sort(
+                robots,
+                Comparator.comparingInt(r -> r.position)
+        );
+
+       
+        Deque<Robot> stack = new ArrayDeque<>();
+
+        for (Robot current : robots) {
+
+          
+            while (!stack.isEmpty()
+                    && stack.peek().direction == 'R'
+                    && current.direction == 'L') {
+
+                Robot rightRobot = stack.peek();
+
+                // Case 1: Right robot has greater health
+                if (rightRobot.health > current.health) {
+
+                    rightRobot.health--;
+
+                    // Current L robot is destroyed
+                    current.health = 0;
+
+                    break;
+                }
+
+                else if (rightRobot.health < current.health) {
+
+                    current.health--;
+
+                    // Right robot is destroyed
+                    stack.pop();
+                }
+
+                else {
+
+                    stack.pop();
+                    current.health = 0;
+
+                    break;
+                }
+            }
+
+            if (current.health > 0) {
+                stack.push(current);
+            }
+        }
+
+      
+
+        int[] finalHealth = new int[n];
+
+        for (Robot robot : stack) {
+            finalHealth[robot.index] = robot.health;
+        }
+
+        List<Integer> result = new ArrayList<>();
+
+        for (int i = 0; i < n; i++) {
+            if (finalHealth[i] > 0) {
+                result.add(finalHealth[i]);
+            }
+        }
+
+        return result;
+    }
+}
