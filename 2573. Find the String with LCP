@@ -1,0 +1,155 @@
+class Solution {
+
+    static class DSU {
+
+        int[] parent;
+        int[] rank;
+
+        DSU(int n) {
+            parent = new int[n];
+            rank = new int[n];
+
+            for (int i = 0; i < n; i++) {
+                parent[i] = i;
+            }
+        }
+
+        int find(int x) {
+
+            if (parent[x] != x) {
+                parent[x] = find(parent[x]);
+            }
+
+            return parent[x];
+        }
+
+        void union(int a, int b) {
+
+            int pa = find(a);
+            int pb = find(b);
+
+            if (pa == pb) {
+                return;
+            }
+
+            if (rank[pa] < rank[pb]) {
+                parent[pa] = pb;
+            } else if (rank[pa] > rank[pb]) {
+                parent[pb] = pa;
+            } else {
+                parent[pb] = pa;
+                rank[pa]++;
+            }
+        }
+    }
+
+    public String findTheString(int[][] lcp) {
+
+        int n = lcp.length;
+
+        DSU dsu = new DSU(n);
+
+        // --------------------------------------------------
+        // 1. Validate diagonal
+        // --------------------------------------------------
+
+        for (int i = 0; i < n; i++) {
+
+            if (lcp[i][i] != n - i) {
+                return "";
+            }
+        }
+
+        // --------------------------------------------------
+        // 2. Basic matrix validation
+        // --------------------------------------------------
+
+        for (int i = 0; i < n; i++) {
+
+            for (int j = 0; j < n; j++) {
+
+                if (lcp[i][j] < 0 || lcp[i][j] > n - Math.max(i, j)) {
+                    return "";
+                }
+
+                // LCP must be symmetric
+                if (lcp[i][j] != lcp[j][i]) {
+                    return "";
+                }
+
+                // If first characters match, union them
+                if (lcp[i][j] > 0) {
+                    dsu.union(i, j);
+                }
+            }
+        }
+
+        // --------------------------------------------------
+        // 3. Assign smallest possible characters
+        // --------------------------------------------------
+
+        char[] word = new char[n];
+
+        char nextChar = 'a';
+
+        for (int i = 0; i < n; i++) {
+
+            int root = dsu.find(i);
+
+            // Already assigned
+            if (word[i] != 0) {
+                continue;
+            }
+
+            if (nextChar > 'z') {
+                return "";
+            }
+
+            // Assign this character to every position
+            // belonging to the same group.
+            for (int j = i; j < n; j++) {
+
+                if (dsu.find(j) == root) {
+                    word[j] = nextChar;
+                }
+            }
+
+            nextChar++;
+        }
+
+        // --------------------------------------------------
+        // 4. Verify the complete LCP matrix
+        // --------------------------------------------------
+
+        for (int i = 0; i < n; i++) {
+
+            for (int j = 0; j < n; j++) {
+
+                int actual = calculateLCP(word, i, j);
+
+                if (actual != lcp[i][j]) {
+                    return "";
+                }
+            }
+        }
+
+        return new String(word);
+    }
+
+    private int calculateLCP(char[] word, int i, int j) {
+
+        int n = word.length;
+        int count = 0;
+
+        while (i < n &&
+               j < n &&
+               word[i] == word[j]) {
+
+            count++;
+            i++;
+            j++;
+        }
+
+        return count;
+    }
+}
