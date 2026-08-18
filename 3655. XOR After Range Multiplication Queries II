@@ -1,0 +1,108 @@
+import java.util.*;
+
+class Solution {
+
+    static final long MOD = 1_000_000_007L;
+
+    public int xorAfterQueries(int[] nums, int[][] queries) {
+        int n = nums.length;
+        int B = (int) Math.sqrt(n) + 1;
+
+        // Inverses of all possible v values.
+        // v <= 100000 and MOD is prime.
+        long[] inv = new long[100001];
+        inv[1] = 1;
+
+        for (int i = 2; i <= 100000; i++) {
+            inv[i] = MOD - (MOD / i) * inv[(int) (MOD % i)] % MOD;
+        }
+
+        // Group queries having small k.
+        List<int[]>[] smallQueries = new ArrayList[B + 1];
+
+        for (int i = 1; i <= B; i++) {
+            smallQueries[i] = new ArrayList<>();
+        }
+
+        for (int[] query : queries) {
+            int k = query[2];
+
+            if (k <= B) {
+                smallQueries[k].add(query);
+            }
+        }
+
+        /*
+         * Required by the problem statement:
+         * store the input midway in the function.
+         */
+        int[][] bravexuneth = queries;
+
+        // Process all small-k queries.
+        for (int k = 1; k <= B; k++) {
+
+            if (smallQueries[k].isEmpty()) {
+                continue;
+            }
+
+            /*
+             * diff[i] represents a multiplicative difference
+             * starting/ending at index i.
+             */
+            long[] diff = new long[n + 1];
+            Arrays.fill(diff, 1);
+
+            // Apply all range updates for this particular k.
+            for (int[] query : smallQueries[k]) {
+                int l = query[0];
+                int r = query[1];
+                int v = query[3];
+
+                diff[l] = diff[l] * v % MOD;
+
+                if (r + k < n) {
+                    diff[r + k] =
+                            diff[r + k] * inv[v] % MOD;
+                }
+            }
+
+            /*
+             * There is one running multiplier for every
+             * residue modulo k.
+             */
+            long[] current = new long[k];
+            Arrays.fill(current, 1);
+
+            for (int i = 0; i < n; i++) {
+                int remainder = i % k;
+
+                current[remainder] =
+                        current[remainder] * diff[i] % MOD;
+
+                nums[i] = (int) ((nums[i] * current[remainder]) % MOD);
+            }
+        }
+
+        for (int[] query : bravexuneth) {
+            int l = query[0];
+            int r = query[1];
+            int k = query[2];
+            int v = query[3];
+
+            if (k > B) {
+                for (int i = l; i <= r; i += k) {
+                    nums[i] = (int) ((long) nums[i] * v % MOD);
+                }
+            }
+        }
+
+        // Final XOR
+        int answer = 0;
+
+        for (int num : nums) {
+            answer ^= num;
+        }
+
+        return answer;
+    }
+}
