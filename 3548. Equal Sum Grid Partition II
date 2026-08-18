@@ -1,0 +1,270 @@
+import java.util.*;
+
+class Solution {
+
+    public boolean canPartitionGrid(int[][] grid) {
+
+        int m = grid.length;
+        int n = grid[0].length;
+
+        long totalSum = 0;
+
+        for (int[] row : grid) {
+            for (int value : row) {
+                totalSum += value;
+            }
+        }
+
+        // Check horizontal cuts
+        if (checkHorizontal(grid, totalSum)) {
+            return true;
+        }
+
+        // Check vertical cuts
+        return checkVertical(grid, totalSum);
+    }
+
+    private boolean checkHorizontal(int[][] grid, long totalSum) {
+
+        int m = grid.length;
+        int n = grid[0].length;
+
+        long topSum = 0;
+
+        // All elements initially belong to bottom.
+        Map<Integer, Integer> top = new HashMap<>();
+        Map<Integer, Integer> bottom = new HashMap<>();
+
+        for (int[] row : grid) {
+            for (int value : row) {
+                bottom.put(value, bottom.getOrDefault(value, 0) + 1);
+            }
+        }
+
+        // Cut after row i.
+        for (int i = 0; i < m - 1; i++) {
+
+            // Move this row from bottom to top.
+            for (int j = 0; j < n; j++) {
+
+                int value = grid[i][j];
+
+                topSum += value;
+
+                top.put(value, top.getOrDefault(value, 0) + 1);
+
+                remove(bottom, value);
+            }
+
+            long bottomSum = totalSum - topSum;
+
+            if (topSum == bottomSum) {
+                return true;
+            }
+
+            if (topSum > bottomSum) {
+
+                long diff = topSum - bottomSum;
+
+                if (diff <= Integer.MAX_VALUE
+                        && canRemoveFromHorizontalTop(
+                            grid, i, (int) diff, top)) {
+                    return true;
+                }
+
+            } else {
+
+                long diff = bottomSum - topSum;
+
+                if (diff <= Integer.MAX_VALUE
+                        && canRemoveFromHorizontalBottom(
+                            grid, i, (int) diff, bottom)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean checkVertical(int[][] grid, long totalSum) {
+
+        int m = grid.length;
+        int n = grid[0].length;
+
+        long leftSum = 0;
+
+        Map<Integer, Integer> left = new HashMap<>();
+        Map<Integer, Integer> right = new HashMap<>();
+
+        for (int[] row : grid) {
+            for (int value : row) {
+                right.put(value, right.getOrDefault(value, 0) + 1);
+            }
+        }
+
+        // Cut after column j.
+        for (int j = 0; j < n - 1; j++) {
+
+            // Move this column from right to left.
+            for (int i = 0; i < m; i++) {
+
+                int value = grid[i][j];
+
+                leftSum += value;
+
+                left.put(value, left.getOrDefault(value, 0) + 1);
+
+                remove(right, value);
+            }
+
+            long rightSum = totalSum - leftSum;
+
+            if (leftSum == rightSum) {
+                return true;
+            }
+
+            if (leftSum > rightSum) {
+
+                long diff = leftSum - rightSum;
+
+                if (diff <= Integer.MAX_VALUE
+                        && canRemoveFromVerticalLeft(
+                            grid, j, (int) diff, left)) {
+                    return true;
+                }
+
+            } else {
+
+                long diff = rightSum - leftSum;
+
+                if (diff <= Integer.MAX_VALUE
+                        && canRemoveFromVerticalRight(
+                            grid, j, (int) diff, right)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /*
+     * Top section occupies rows [0 ... cutRow].
+     */
+    private boolean canRemoveFromHorizontalTop(
+            int[][] grid,
+            int cutRow,
+            int value,
+            Map<Integer, Integer> frequency) {
+
+        if (!frequency.containsKey(value)) {
+            return false;
+        }
+
+        int height = cutRow + 1;
+        int width = grid[0].length;
+
+        // More than one row:
+        // removing any cell keeps the rectangle connected.
+        if (height > 1) {
+            return true;
+        }
+
+        // Only one row.
+        // The removed cell must be at either end.
+        return grid[0][0] == value
+                || grid[0][width - 1] == value;
+    }
+
+    /*
+     * Bottom section occupies rows [cutRow + 1 ... m-1].
+     */
+    private boolean canRemoveFromHorizontalBottom(
+            int[][] grid,
+            int cutRow,
+            int value,
+            Map<Integer, Integer> frequency) {
+
+        if (!frequency.containsKey(value)) {
+            return false;
+        }
+
+        int m = grid.length;
+        int width = grid[0].length;
+        int height = m - cutRow - 1;
+
+        if (height > 1) {
+            return true;
+        }
+
+        // Bottom is one row.
+        int row = m - 1;
+
+        return grid[row][0] == value
+                || grid[row][width - 1] == value;
+    }
+
+    /*
+     * Left section occupies columns [0 ... cutCol].
+     */
+    private boolean canRemoveFromVerticalLeft(
+            int[][] grid,
+            int cutCol,
+            int value,
+            Map<Integer, Integer> frequency) {
+
+        if (!frequency.containsKey(value)) {
+            return false;
+        }
+
+        int height = grid.length;
+        int width = cutCol + 1;
+
+        if (width > 1) {
+            return true;
+        }
+
+        // Only one column.
+        return grid[0][0] == value
+                || grid[height - 1][0] == value;
+    }
+
+    /*
+     * Right section occupies columns [cutCol + 1 ... n-1].
+     */
+    private boolean canRemoveFromVerticalRight(
+            int[][] grid,
+            int cutCol,
+            int value,
+            Map<Integer, Integer> frequency) {
+
+        if (!frequency.containsKey(value)) {
+            return false;
+        }
+
+        int m = grid.length;
+        int n = grid[0].length;
+        int width = n - cutCol - 1;
+
+        if (width > 1) {
+            return true;
+        }
+
+        int col = n - 1;
+
+        return grid[0][col] == value
+                || grid[m - 1][col] == value;
+    }
+
+    private void remove(Map<Integer, Integer> map, int value) {
+
+        int count = map.get(value);
+
+        if (count == 1) {
+            map.remove(value);
+        } else {
+            map.put(value, count - 1);
+        }
+    }
+}
