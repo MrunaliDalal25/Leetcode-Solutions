@@ -1,0 +1,90 @@
+import java.util.*;
+
+class Solution {
+
+    public int maxDistance(int side, int[][] points, int k) {
+        int n = points.length;
+        long perimeter = 4L * side;
+
+        long[] pos = new long[n];
+
+        for (int i = 0; i < n; i++) {
+            int x = points[i][0];
+            int y = points[i][1];
+
+            if (y == 0) {
+                // Bottom edge
+                pos[i] = x;
+            } else if (x == side) {
+                // Right edge
+                pos[i] = side + (long) y;
+            } else if (y == side) {
+                // Top edge
+                pos[i] = 3L * side - x;
+            } else {
+                // Left edge
+                pos[i] = 4L * side - y;
+            }
+        }
+
+        Arrays.sort(pos);
+
+        // Duplicate the circle
+        long[] arr = new long[2 * n];
+
+        for (int i = 0; i < n; i++) {
+            arr[i] = pos[i];
+            arr[i + n] = pos[i] + perimeter;
+        }
+
+        long low = 0;
+        long high = 2L * side;
+
+        while (low < high) {
+            long mid = low + (high - low + 1) / 2;
+
+            if (canPlace(arr, n, k, perimeter, mid)) {
+                low = mid;
+            } else {
+                high = mid - 1;
+            }
+        }
+
+        return (int) low;
+    }
+
+    private boolean canPlace(
+            long[] arr,
+            int n,
+            int k,
+            long perimeter,
+            long distance) {
+
+        // Try every point as the first selected point.
+        for (int start = 0; start < n; start++) {
+
+            long first = arr[start];
+            long last = first;
+
+            int count = 1;
+
+            // Greedily select the next points
+            for (int i = start + 1; i < start + n && count < k; i++) {
+
+                if (arr[i] - last >= distance) {
+                    last = arr[i];
+                    count++;
+                }
+            }
+
+            if (count == k) {
+                // Check the circular gap between last and first.
+                if (first + perimeter - last >= distance) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+}
