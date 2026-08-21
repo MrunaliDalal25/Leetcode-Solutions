@@ -1,0 +1,83 @@
+class Solution {
+
+    public long findKthSmallest(int[] coins, int k) {
+
+        int n = coins.length;
+
+        long left = 1;
+        long right = (long) Arrays.stream(coins).min().getAsInt() * k;
+
+        while (left < right) {
+
+            long mid = left + (right - left) / 2;
+
+            if (countValid(mid, coins) >= k) {
+                right = mid;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        return left;
+    }
+
+    private long countValid(long x, int[] coins) {
+
+        int n = coins.length;
+        long count = 0;
+
+        for (int mask = 1; mask < (1 << n); mask++) {
+
+            long lcm = 1;
+            int bits = 0;
+            boolean overflow = false;
+
+            for (int i = 0; i < n; i++) {
+
+                if ((mask & (1 << i)) != 0) {
+
+                    bits++;
+
+                    lcm = getLcm(lcm, coins[i]);
+
+                    // LCM is already bigger than x,
+                    // so this subset contributes nothing.
+                    if (lcm > x) {
+                        overflow = true;
+                        break;
+                    }
+                }
+            }
+
+            if (overflow) {
+                continue;
+            }
+
+            long multiples = x / lcm;
+
+            if (bits % 2 == 1) {
+                count += multiples;
+            } else {
+                count -= multiples;
+            }
+        }
+
+        return count;
+    }
+
+    private long getLcm(long a, long b) {
+
+        return a / gcd(a, b) * b;
+    }
+
+    private long gcd(long a, long b) {
+
+        while (b != 0) {
+            long temp = a % b;
+            a = b;
+            b = temp;
+        }
+
+        return a;
+    }
+}
