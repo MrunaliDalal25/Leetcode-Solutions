@@ -1,0 +1,76 @@
+class Solution {
+    public String lexGreaterPermutation(String s, String target) {
+        int n = s.length();
+
+        int[] freq = new int[26];
+        for (char c : s.toCharArray()) {
+            freq[c - 'a']++;
+        }
+
+        char[] ans = null;
+
+        // Try making the first greater character at position i.
+        // Positions after i will be filled with the smallest possible chars.
+        for (int i = n - 1; i >= 0; i--) {
+
+            // Build frequency of characters available after fixing
+            // target[0..i-1] to be equal.
+            int[] remaining = freq.clone();
+
+            boolean possiblePrefix = true;
+
+            for (int j = 0; j < i; j++) {
+                int idx = target.charAt(j) - 'a';
+
+                if (remaining[idx] == 0) {
+                    possiblePrefix = false;
+                    break;
+                }
+
+                remaining[idx]--;
+            }
+
+            if (!possiblePrefix) {
+                continue;
+            }
+
+            // At position i, choose the smallest character
+            // strictly greater than target[i].
+            int targetIdx = target.charAt(i) - 'a';
+
+            int greater = -1;
+
+            for (int c = targetIdx + 1; c < 26; c++) {
+                if (remaining[c] > 0) {
+                    greater = c;
+                    break;
+                }
+            }
+
+            if (greater == -1) {
+                continue;
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.append(target, 0, i);
+
+            sb.append((char) ('a' + greater));
+            remaining[greater]--;
+
+            // Smallest possible suffix
+            for (int c = 0; c < 26; c++) {
+                while (remaining[c] > 0) {
+                    sb.append((char) ('a' + c));
+                    remaining[c]--;
+                }
+            }
+
+            ans = sb.toString().toCharArray();
+
+            break;
+        }
+
+        return ans == null ? "" : new String(ans);
+    }
+}
