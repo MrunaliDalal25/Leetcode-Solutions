@@ -1,0 +1,162 @@
+class Solution {
+
+    public String lexPalindromicPermutation(String s, String target) {
+
+        int n = s.length();
+        int halfLen = n / 2;
+
+        // 1. Count characters
+        int[] count = new int[26];
+
+        for (char ch : s.toCharArray()) {
+            count[ch - 'a']++;
+        }
+
+        // 2. Check palindrome possibility
+        int odd = 0;
+        int middle = -1;
+
+        for (int i = 0; i < 26; i++) {
+            if (count[i] % 2 == 1) {
+                odd++;
+                middle = i;
+            }
+        }
+
+        if (odd > 1) {
+            return "";
+        }
+
+        // Characters available for the left half
+        int[] halfCount = new int[26];
+
+        for (int i = 0; i < 26; i++) {
+            halfCount[i] = count[i] / 2;
+        }
+
+        // 3. Try to match target's first half
+        int[] remaining = halfCount.clone();
+
+        int matched = 0;
+
+        while (matched < halfLen) {
+
+            int c = target.charAt(matched) - 'a';
+
+            if (remaining[c] == 0) {
+                break;
+            }
+
+            remaining[c]--;
+            matched++;
+        }
+
+        /*
+         * Case 1:
+         * We can exactly construct target's first half.
+         *
+         * Check whether the resulting palindrome itself
+         * is already greater than target.
+         */
+        if (matched == halfLen) {
+
+            int[] half = new int[halfLen];
+
+            for (int i = 0; i < halfLen; i++) {
+                half[i] = target.charAt(i) - 'a';
+            }
+
+            String palindrome = buildPalindrome(half, middle, n);
+
+            if (palindrome.compareTo(target) > 0) {
+                return palindrome;
+            }
+        }
+
+        /*
+         * Case 2:
+         * Need the smallest half strictly greater than
+         * target's first half.
+         *
+         * Backtrack from the right.
+         */
+
+        remaining = halfCount.clone();
+
+        // Consume target prefix as much as possible
+        int k = 0;
+
+        while (k < halfLen) {
+
+            int c = target.charAt(k) - 'a';
+
+            if (remaining[c] == 0) {
+                break;
+            }
+
+            remaining[c]--;
+            k++;
+        }
+
+        /*
+         * Try changing the rightmost possible position
+         * to a slightly larger character.
+         */
+        for (int i = k; i >= 0; i--) {
+
+            int targetChar = target.charAt(i) - 'a';
+
+            // Find smallest character > target[i]
+            for (int c = targetChar + 1; c < 26; c++) {
+
+                if (remaining[c] > 0) {
+
+                    int[] half = new int[halfLen];
+
+                    // Prefix remains equal to target
+                    for (int j = 0; j < i; j++) {
+                        half[j] = target.charAt(j) - 'a';
+                    }
+
+                    // Make this position greater
+                    half[i] = c;
+                    remaining[c]--;
+
+                    // Fill the suffix with smallest characters
+                    int pos = i + 1;
+
+                    for (int x = 0; x < 26; x++) {
+                        while (remaining[x] > 0) {
+                            half[pos++] = x;
+                            remaining[x]--;
+                        }
+                    }
+
+                    return buildPalindrome(half, middle, n);
+                }
+            }
+            if (i > 0) {
+                int restore = target.charAt(i - 1) - 'a';
+                remaining[restore]++;
+            }
+        }
+
+        return "";
+    }
+
+    private String buildPalindrome(int[] half, int middle, int n) {
+
+        StringBuilder sb = new StringBuilder(n);
+        for (int c : half) {
+            sb.append((char) ('a' + c));
+        }
+        if (n % 2 == 1) {
+            sb.append((char) ('a' + middle));
+        }
+        for (int i = half.length - 1; i >= 0; i--) {
+            sb.append((char) ('a' + half[i]));
+        }
+
+        return sb.toString();
+    }
+}
