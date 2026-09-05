@@ -1,0 +1,15 @@
+awk '
+{
+    for (i = 1; i <= NF; i++)
+        a[NR, i] = $i
+    cols = NF
+}
+END {
+    for (i = 1; i <= cols; i++) {
+        for (j = 1; j <= NR; j++) {
+            if (j > 1) printf " "
+            printf "%s", a[j, i]
+        }
+        print ""
+    }
+}' file.txt
