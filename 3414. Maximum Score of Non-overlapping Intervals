@@ -1,0 +1,122 @@
+import java.util.*;
+
+class Solution {
+    public int[] maximumWeight(List<List<Integer>> intervals) {
+        int n = intervals.size();
+
+        // [left, right, weight, originalIndex]
+        int[][] a = new int[n][4];
+
+        for (int i = 0; i < n; i++) {
+            a[i][0] = intervals.get(i).get(0);
+            a[i][1] = intervals.get(i).get(1);
+            a[i][2] = intervals.get(i).get(2);
+            a[i][3] = i;
+        }
+
+        // Sort by starting position
+        Arrays.sort(a, (x, y) -> {
+            if (x[0] != y[0]) return Integer.compare(x[0], y[0]);
+            return Integer.compare(x[1], y[1]);
+        });
+
+        // next[i] = first interval whose left > a[i].right
+        int[] next = new int[n];
+        int[] starts = new int[n];
+
+        for (int i = 0; i < n; i++) {
+            starts[i] = a[i][0];
+        }
+
+        for (int i = 0; i < n; i++) {
+            next[i] = upperBound(starts, a[i][1]);
+        }
+
+        // dp[i][k] = best result using intervals from i onward,
+        // choosing at most k intervals.
+        State[][] dp = new State[n + 1][5];
+
+        for (int k = 0; k <= 4; k++) {
+            dp[n][k] = new State(0, new ArrayList<>());
+        }
+
+        for (int i = n - 1; i >= 0; i--) {
+            for (int k = 1; k <= 4; k++) {
+
+                // Skip current interval
+                State skip = dp[i + 1][k];
+
+                // Take current interval
+                State takeNext = dp[next[i]][k - 1];
+
+                long takeScore = a[i][2] + takeNext.score;
+
+                List<Integer> takeIndices = new ArrayList<>();
+                takeIndices.add(a[i][3]);
+                takeIndices.addAll(takeNext.indices);
+
+                State take = new State(takeScore, takeIndices);
+
+                dp[i][k] = better(skip, take);
+            }
+
+            dp[i][0] = new State(0, new ArrayList<>());
+        }
+
+        List<Integer> answer = new ArrayList<>(dp[0][4].indices);
+        Collections.sort(answer);
+
+        int[] result = new int[answer.size()];
+        for (int i = 0; i < answer.size(); i++) {
+            result[i] = answer.get(i);
+        }
+
+        return result;
+    }
+
+    private int upperBound(int[] arr, int target) {
+        int lo = 0, hi = arr.length;
+
+        while (lo < hi) {
+            int mid = lo + (hi - lo) / 2;
+
+            if (arr[mid] <= target) {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+
+        return lo;
+    }
+
+    private State better(State a, State b) {
+        if (a.score != b.score) {
+            return a.score > b.score ? a : b;
+        }
+
+        List<Integer> x = new ArrayList<>(a.indices);
+        List<Integer> y = new ArrayList<>(b.indices);
+
+        Collections.sort(x);
+        Collections.sort(y);
+
+        for (int i = 0; i < Math.min(x.size(), y.size()); i++) {
+            if (!x.get(i).equals(y.get(i))) {
+                return x.get(i) < y.get(i) ? a : b;
+            }
+        }
+
+        return x.size() <= y.size() ? a : b;
+    }
+
+    static class State {
+        long score;
+        List<Integer> indices;
+
+        State(long score, List<Integer> indices) {
+            this.score = score;
+            this.indices = indices;
+        }
+    }
+}
