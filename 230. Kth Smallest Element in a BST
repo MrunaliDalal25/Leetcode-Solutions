@@ -1,0 +1,27 @@
+class Solution {
+    public int kthSmallest(TreeNode root, int k) {
+        Stack<TreeNode> stack = new Stack<>();
+
+        while (root != null || !stack.isEmpty()) {
+
+            // Go to the leftmost node
+            while (root != null) {
+                stack.push(root);
+                root = root.left;
+            }
+
+            // Visit node
+            root = stack.pop();
+            k--;
+
+            if (k == 0) {
+                return root.val;
+            }
+
+            // Move to right subtree
+            root = root.right;
+        }
+
+        return -1;
+    }
+}
