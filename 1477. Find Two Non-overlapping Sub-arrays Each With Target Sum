@@ -1,0 +1,47 @@
+class Solution {
+    public int minSumOfLengths(int[] arr, int target) {
+        int n = arr.length;
+        int[] best = new int[n];
+
+        int INF = n + 1;
+        for (int i = 0; i < n; i++) {
+            best[i] = INF;
+        }
+
+        int left = 0;
+        int sum = 0;
+        int minLength = INF;
+
+        for (int right = 0; right < n; right++) {
+            sum += arr[right];
+
+            while (sum > target) {
+                sum -= arr[left++];
+            }
+
+            if (sum == target) {
+                int length = right - left + 1;
+
+                // Check if a previous non-overlapping subarray exists
+                if (left > 0 && best[left - 1] != INF) {
+                    minLength = Math.min(
+                        minLength,
+                        length + best[left - 1]
+                    );
+                }
+            }
+
+            // Carry forward the best subarray found so far
+            if (right > 0) {
+                best[right] = best[right - 1];
+            }
+
+            // Current subarray can become the best
+            if (sum == target) {
+                best[right] = Math.min(best[right], right - left + 1);
+            }
+        }
+
+        return minLength == INF ? -1 : minLength;
+    }
+}
