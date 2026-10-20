@@ -1,0 +1,47 @@
+
+class Solution {
+    public int sortableIntegers(int[] nums) {
+        int n = nums.length;
+        int ans = 0;
+
+        for (int k = 1; k <= n; k++) {
+            if (n % k != 0) {
+                continue;
+            }
+
+            boolean sortable = true;
+
+            for (int start = 0; start < n; start += k) {
+                if (k == 1) {
+                    // Single-element blocks cannot change the array.
+                    if (start > 0 && nums[start - 1] > nums[start]) {
+                        sortable = false;
+                        break;
+                    }
+                    continue;
+                }
+
+                int descents = 0;
+
+                for (int j = start; j < start + k; j++) {
+                    int next = (j + 1 == start + k) ? start : j + 1;
+
+                    if (nums[j] > nums[next]) {
+                        descents++;
+                    }
+                }
+
+                if (descents > 1) {
+                    sortable = false;
+                    break;
+                }
+            }
+
+            if (sortable) {
+                ans += k;
+            }
+        }
+
+        return ans;
+    }
+}
