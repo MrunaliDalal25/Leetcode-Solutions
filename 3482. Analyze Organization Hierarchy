@@ -1,0 +1,65 @@
+WITH RECURSIVE org AS (
+
+    -- Step 1: Start with the CEO
+    SELECT
+        employee_id,
+        employee_name,
+        manager_id,
+        salary,
+        1 AS level
+    FROM Employees
+    WHERE manager_id IS NULL
+
+    UNION ALL
+
+    -- Step 2: Find employees reporting to each employee
+    SELECT
+        e.employee_id,
+        e.employee_name,
+        e.manager_id,
+        e.salary,
+        o.level + 1
+    FROM Employees e
+    JOIN org o
+        ON e.manager_id = o.employee_id
+),
+
+reports AS (
+
+    -- Step 3: Each employee reports to themselves
+    SELECT
+        employee_id AS manager_id,
+        employee_id AS report_id,
+        salary
+    FROM Employees
+
+    UNION ALL
+
+    -- Step 4: Find all direct and indirect reports
+    SELECT
+        r.manager_id,
+        e.employee_id,
+        e.salary
+    FROM reports r
+    JOIN Employees e
+        ON e.manager_id = r.report_id
+)
+
+-- Step 5: Calculate team size and budget
+SELECT
+    o.employee_id,
+    o.employee_name,
+    o.level,
+    COUNT(r.report_id) - 1 AS team_size,
+    SUM(r.salary) AS budget
+FROM org o
+JOIN reports r
+    ON o.employee_id = r.manager_id
+GROUP BY
+    o.employee_id,
+    o.employee_name,
+    o.level
+ORDER BY
+    o.level ASC,
+    budget DESC,
+    o.employee_name ASC;
