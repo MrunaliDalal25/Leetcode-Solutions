@@ -1,0 +1,45 @@
+
+WITH RECURSIVE words AS (
+    SELECT
+        content_id,
+        content_text,
+        1 AS pos,
+        CHAR_LENGTH(content_text) AS len,
+        CAST('' AS CHAR(5000)) AS result
+    FROM user_content
+
+    UNION ALL
+
+    SELECT
+        content_id,
+        content_text,
+        pos + 1,
+        len,
+        CONCAT(
+            result,
+            CASE
+                WHEN pos = 1
+                     OR SUBSTRING(content_text, pos - 1, 1) IN (' ', '-')
+                THEN
+                    CASE
+                        WHEN SUBSTRING(content_text, pos, 1) REGEXP '^[a-zA-Z]$'
+                        THEN UPPER(SUBSTRING(content_text, pos, 1))
+                        ELSE SUBSTRING(content_text, pos, 1)
+                    END
+                ELSE
+                    CASE
+                        WHEN SUBSTRING(content_text, pos, 1) REGEXP '^[a-zA-Z]$'
+                        THEN LOWER(SUBSTRING(content_text, pos, 1))
+                        ELSE SUBSTRING(content_text, pos, 1)
+                    END
+            END
+        )
+    FROM words
+    WHERE pos <= len
+)
+SELECT
+    content_id,
+    content_text AS original_text,
+    result AS converted_text
+FROM words
+WHERE pos = len + 1;
