@@ -1,0 +1,64 @@
+
+class Solution {
+
+    private int[][] directions = {
+        {-1, 0},  // Up
+        {1, 0},   // Down
+        {0, -1},  // Left
+        {0, 1}    // Right
+    };
+
+    private boolean dfs(int[][] grid, int row, int col) {
+
+        int m = grid.length;
+        int n = grid[0].length;
+
+        // Outside the grid means this island is not closed
+        if (row < 0 || col < 0 || row >= m || col >= n) {
+            return false;
+        }
+
+        // Water or already visited
+        if (grid[row][col] == 1) {
+            return true;
+        }
+
+        // Mark land as visited
+        grid[row][col] = 1;
+
+        boolean closed = true;
+
+        for (int[] dir : directions) {
+            int newRow = row + dir[0];
+            int newCol = col + dir[1];
+
+            if (!dfs(grid, newRow, newCol)) {
+                closed = false;
+            }
+        }
+
+        return closed;
+    }
+
+    public int closedIsland(int[][] grid) {
+
+        int m = grid.length;
+        int n = grid[0].length;
+
+        int count = 0;
+
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+
+                if (grid[i][j] == 0) {
+
+                    if (dfs(grid, i, j)) {
+                        count++;
+                    }
+                }
+            }
+        }
+
+        return count;
+    }
+}
