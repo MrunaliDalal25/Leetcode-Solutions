@@ -1,0 +1,66 @@
+WITH store_inventory AS (
+    SELECT
+        store_id,
+        COUNT(DISTINCT product_name) AS product_count,
+
+        MAX(price) AS max_price,
+        MIN(price) AS min_price,
+
+        MAX(CASE
+            WHEN price = (
+                SELECT MAX(i2.price)
+                FROM inventory i2
+                WHERE i2.store_id = inventory.store_id
+            )
+            THEN product_name
+        END) AS most_exp_product,
+
+        MAX(CASE
+            WHEN price = (
+                SELECT MIN(i3.price)
+                FROM inventory i3
+                WHERE i3.store_id = inventory.store_id
+            )
+            THEN product_name
+        END) AS cheapest_product,
+
+        MAX(CASE
+            WHEN price = (
+                SELECT MAX(i4.price)
+                FROM inventory i4
+                WHERE i4.store_id = inventory.store_id
+            )
+            THEN quantity
+        END) AS expensive_quantity,
+
+        MAX(CASE
+            WHEN price = (
+                SELECT MIN(i5.price)
+                FROM inventory i5
+                WHERE i5.store_id = inventory.store_id
+            )
+            THEN quantity
+        END) AS cheapest_quantity
+
+    FROM inventory
+    GROUP BY store_id
+)
+
+SELECT
+    s.store_id,
+    s.store_name,
+    s.location,
+    si.most_exp_product,
+    si.cheapest_product,
+    ROUND(
+        si.cheapest_quantity / si.expensive_quantity,
+        2
+    ) AS imbalance_ratio
+FROM stores s
+JOIN store_inventory si
+    ON s.store_id = si.store_id
+WHERE si.product_count >= 3
+  AND si.expensive_quantity < si.cheapest_quantity
+ORDER BY
+    imbalance_ratio DESC,
+    s.store_name ASC;
