@@ -1,0 +1,211 @@
+
+WITH RECURSIVE
+
+-- Step 1: Sort sessions and identify gaps greater than 2 days
+ordered_sessions AS (
+    SELECT
+        session_id,
+        student_id,
+        subject,
+        session_date,
+        hours_studied,
+        LAG(session_date) OVER (
+            PARTITION BY student_id
+            ORDER BY session_date, session_id
+        ) AS previous_date
+    FROM study_sessions
+),
+
+-- Step 2: Start a new group whenever the date gap exceeds 2 days
+session_groups AS (
+    SELECT *,
+        SUM(
+            CASE
+                WHEN previous_date IS NOT NULL
+                     AND DATEDIFF(session_date, previous_date) > 2
+                THEN 1
+                ELSE 0
+            END
+        ) OVER (
+            PARTITION BY student_id
+            ORDER BY session_date, session_id
+        ) AS run_id
+    FROM ordered_sessions
+),
+
+-- Step 3: Number sessions inside each continuous group
+run_sessions AS (
+    SELECT
+        session_id,
+        student_id,
+        subject,
+        session_date,
+        hours_studied,
+        run_id,
+        ROW_NUMBER() OVER (
+            PARTITION BY student_id, run_id
+            ORDER BY session_date, session_id
+        ) AS pos,
+        COUNT(*) OVER (
+            PARTITION BY student_id, run_id
+        ) AS session_count
+    FROM session_groups
+),
+
+-- Step 4: Generate possible cycle lengths (3, 4, 5, ...)
+cycle_lengths AS (
+    SELECT
+        student_id,
+        run_id,
+        session_count,
+        3 AS cycle_length
+    FROM run_sessions
+    GROUP BY student_id, run_id, session_count
+    HAVING session_count >= 6
+
+    UNION ALL
+
+    SELECT
+        student_id,
+        run_id,
+        session_count,
+        cycle_length + 1
+    FROM cycle_lengths
+    WHERE cycle_length + 1 <= FLOOR(session_count / 2)
+),
+
+-- Step 5: Find possible starting positions.
+-- The first cycle must contain distinct subjects.
+cycle_candidates AS (
+    SELECT
+        r.student_id,
+        r.run_id,
+        r.pos AS start_pos,
+        c.cycle_length
+    FROM cycle_lengths c
+    JOIN run_sessions r
+        ON r.student_id = c.student_id
+       AND r.run_id = c.run_id
+    JOIN run_sessions first_cycle
+        ON first_cycle.student_id = r.student_id
+       AND first_cycle.run_id = r.run_id
+       AND first_cycle.pos BETWEEN r.pos
+                               AND r.pos + c.cycle_length - 1
+    WHERE r.pos + (2 * c.cycle_length) - 1
+          <= c.session_count
+    GROUP BY
+        r.student_id,
+        r.run_id,
+        r.pos,
+        c.cycle_length
+    HAVING COUNT(DISTINCT first_cycle.subject) = c.cycle_length
+),
+
+-- Step 6: Extend each candidate while the subject sequence repeats
+pattern_walk (
+    student_id,
+    run_id,
+    start_pos,
+    cycle_length,
+    current_pos
+) AS (
+    SELECT
+        student_id,
+        run_id,
+        start_pos,
+        cycle_length,
+        start_pos
+    FROM cycle_candidates
+
+    UNION ALL
+
+    SELECT
+        w.student_id,
+        w.run_id,
+        w.start_pos,
+        w.cycle_length,
+        w.current_pos + 1
+    FROM pattern_walk w
+    JOIN run_sessions next_session
+        ON next_session.student_id = w.student_id
+       AND next_session.run_id = w.run_id
+       AND next_session.pos = w.current_pos + 1
+    JOIN run_sessions expected_subject
+        ON expected_subject.student_id = w.student_id
+       AND expected_subject.run_id = w.run_id
+       AND expected_subject.pos =
+           w.start_pos + MOD(
+               w.current_pos + 1 - w.start_pos,
+               w.cycle_length
+           )
+    WHERE next_session.subject = expected_subject.subject
+),
+
+-- Step 7: Keep patterns containing at least two complete cycles
+valid_patterns AS (
+    SELECT
+        student_id,
+        run_id,
+        start_pos,
+        cycle_length,
+        MAX(current_pos) AS end_pos
+    FROM pattern_walk
+    GROUP BY
+        student_id,
+        run_id,
+        start_pos,
+        cycle_length
+    HAVING MAX(current_pos) >=
+           start_pos + (2 * cycle_length) - 1
+),
+
+-- Step 8: Calculate total study hours for each pattern
+pattern_totals AS (
+    SELECT
+        p.student_id,
+        p.run_id,
+        p.start_pos,
+        p.end_pos,
+        p.cycle_length,
+        SUM(r.hours_studied) AS total_study_hours,
+        p.end_pos - p.start_pos + 1 AS pattern_sessions
+    FROM valid_patterns p
+    JOIN run_sessions r
+        ON r.student_id = p.student_id
+       AND r.run_id = p.run_id
+       AND r.pos BETWEEN p.start_pos AND p.end_pos
+    GROUP BY
+        p.student_id,
+        p.run_id,
+        p.start_pos,
+        p.end_pos,
+        p.cycle_length
+),
+
+-- Step 9: Select the longest matching pattern per student
+ranked_patterns AS (
+    SELECT *,
+        ROW_NUMBER() OVER (
+            PARTITION BY student_id
+            ORDER BY
+                pattern_sessions DESC,
+                cycle_length DESC,
+                total_study_hours DESC
+        ) AS rn
+    FROM pattern_totals
+)
+
+-- Step 10: Return student details
+SELECT
+    s.student_id,
+    s.student_name,
+    s.major,
+    p.cycle_length,
+    p.total_study_hours
+FROM ranked_patterns p
+JOIN students s
+    ON s.student_id = p.student_id
+WHERE p.rn = 1
+ORDER BY
+    p.cycle_length DESC,
+    p.total_study_hours DESC;
