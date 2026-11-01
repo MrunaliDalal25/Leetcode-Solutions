@@ -1,0 +1,41 @@
+
+import java.util.*;
+
+class MedianFinder {
+
+    // Max Heap: stores smaller half
+    private PriorityQueue<Integer> left;
+
+    // Min Heap: stores larger half
+    private PriorityQueue<Integer> right;
+
+    public MedianFinder() {
+        left = new PriorityQueue<>(Collections.reverseOrder());
+        right = new PriorityQueue<>();
+    }
+
+    public void addNum(int num) {
+
+        // Add number to max heap first
+        left.offer(num);
+
+        // Ensure largest element of left moves to right
+        right.offer(left.poll());
+
+        // Balance heaps: left can have at most one extra element
+        if (left.size() < right.size()) {
+            left.offer(right.poll());
+        }
+    }
+
+    public double findMedian() {
+
+        // Odd number of elements
+        if (left.size() > right.size()) {
+            return left.peek();
+        }
+
+        // Even number of elements
+        return ((long) left.peek() + right.peek()) / 2.0;
+    }
+}
