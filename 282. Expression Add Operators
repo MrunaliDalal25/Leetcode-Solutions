@@ -1,0 +1,101 @@
+
+import java.util.*;
+
+class Solution {
+
+    public List<String> addOperators(String num, int target) {
+        List<String> result = new ArrayList<>();
+
+        backtrack(
+            num,
+            target,
+            0,
+            0L,
+            0L,
+            new StringBuilder(),
+            result
+        );
+
+        return result;
+    }
+
+    private void backtrack(
+        String num,
+        int target,
+        int index,
+        long value,
+        long prev,
+        StringBuilder expression,
+        List<String> result
+    ) {
+
+        // All digits are used
+        if (index == num.length()) {
+            if (value == target) {
+                result.add(expression.toString());
+            }
+            return;
+        }
+
+        for (int i = index; i < num.length(); i++) {
+
+            // Avoid leading zeros
+            if (i > index && num.charAt(index) == '0') {
+                break;
+            }
+
+            String part = num.substring(index, i + 1);
+            long current = Long.parseLong(part);
+
+            int length = expression.length();
+
+            // First operand: no operator needed
+            if (index == 0) {
+                expression.append(part);
+
+                backtrack(
+                    num, target, i + 1,
+                    current, current,
+                    expression, result
+                );
+
+                expression.setLength(length);
+            } else {
+
+                // Addition
+                expression.append("+").append(part);
+
+                backtrack(
+                    num, target, i + 1,
+                    value + current, current,
+                    expression, result
+                );
+
+                expression.setLength(length);
+
+                // Subtraction
+                expression.append("-").append(part);
+
+                backtrack(
+                    num, target, i + 1,
+                    value - current, -current,
+                    expression, result
+                );
+
+                expression.setLength(length);
+
+                // Multiplication
+                expression.append("*").append(part);
+
+                backtrack(
+                    num, target, i + 1,
+                    value - prev + prev * current,
+                    prev * current,
+                    expression, result
+                );
+
+                expression.setLength(length);
+            }
+        }
+    }
+}
