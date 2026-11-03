@@ -1,0 +1,43 @@
+class Solution {
+    public int nthSuperUglyNumber(int n, int[] primes) {
+
+        int k = primes.length;
+
+        int[] dp = new int[n];
+        int[] index = new int[k];
+        int[] next = new int[k];
+
+        // First super ugly number
+        dp[0] = 1;
+
+        // Initially, each prime generates prime * 1
+        for (int i = 0; i < k; i++) {
+            next[i] = primes[i];
+        }
+
+        // Generate remaining super ugly numbers
+        for (int i = 1; i < n; i++) {
+
+            int min = Integer.MAX_VALUE;
+
+            // Find minimum candidate
+            for (int j = 0; j < k; j++) {
+                min = Math.min(min, next[j]);
+            }
+
+            dp[i] = min;
+
+            // Update all matching pointers
+            for (int j = 0; j < k; j++) {
+
+                if (next[j] == min) {
+                    index[j]++;
+
+                    next[j] = dp[index[j]] * primes[j];
+                }
+            }
+        }
+
+        return dp[n - 1];
+    }
+}
