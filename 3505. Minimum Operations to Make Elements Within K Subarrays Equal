@@ -1,0 +1,159 @@
+
+import java.util.*;
+
+class Solution {
+
+    class Fenwick {
+        int n;
+        long[] tree;
+
+        Fenwick(int n) {
+            this.n = n;
+            tree = new long[n + 1];
+        }
+
+        void add(int i, long val) {
+            while (i <= n) {
+                tree[i] += val;
+                i += i & -i;
+            }
+        }
+
+        long sum(int i) {
+            long res = 0;
+
+            while (i > 0) {
+                res += tree[i];
+                i -= i & -i;
+            }
+
+            return res;
+        }
+
+        // Find the smallest index whose prefix sum >= k
+        int kth(int k) {
+            int idx = 0;
+
+            for (int step = Integer.highestOneBit(n);
+                 step > 0; step >>= 1) {
+
+                int next = idx + step;
+
+                if (next <= n && tree[next] < k) {
+                    idx = next;
+                    k -= (int) tree[next];
+                }
+            }
+
+            return idx + 1;
+        }
+    }
+
+    public long minOperations(int[] nums, int x, int k) {
+
+        int n = nums.length;
+
+        // Coordinate compression
+        int[] sorted = nums.clone();
+        Arrays.sort(sorted);
+
+        int m = 0;
+
+        for (int v : sorted) {
+            if (m == 0 || sorted[m - 1] != v) {
+                sorted[m++] = v;
+            }
+        }
+
+        int[] values = Arrays.copyOf(sorted, m);
+
+        int[] rank = new int[n];
+
+        for (int i = 0; i < n; i++) {
+            rank[i] = Arrays.binarySearch(values, nums[i]) + 1;
+        }
+
+        // Fenwick trees
+        Fenwick countTree = new Fenwick(m);
+        Fenwick sumTree = new Fenwick(m);
+
+        long[] cost = new long[n - x + 1];
+
+        long windowSum = 0;
+
+        // Calculate cost of every window of size x
+        for (int i = 0; i < n; i++) {
+
+            int r = rank[i];
+
+            countTree.add(r, 1);
+            sumTree.add(r, nums[i]);
+            windowSum += nums[i];
+
+            if (i >= x) {
+                int oldRank = rank[i - x];
+
+                countTree.add(oldRank, -1);
+                sumTree.add(oldRank, -nums[i - x]);
+
+                windowSum -= nums[i - x];
+            }
+
+            if (i >= x - 1) {
+
+                // Find median
+                int medianRank = countTree.kth((x + 1) / 2);
+
+                long median = values[medianRank - 1];
+
+                // Prefix count and sum (<= median)
+                long leftCount = countTree.sum(medianRank);
+                long leftSum = sumTree.sum(medianRank);
+
+                long rightCount = x - leftCount;
+                long rightSum = windowSum - leftSum;
+
+                // Minimum operations for this window
+                long windowCost =
+                    median * leftCount - leftSum
+                    + rightSum - median * rightCount;
+
+                cost[i - x + 1] = windowCost;
+            }
+        }
+
+        // DP: select exactly k non-overlapping windows
+        long INF = Long.MAX_VALUE / 4;
+
+        long[] prev = new long[n + 1];
+        long[] curr = new long[n + 1];
+
+        // prev[i] = 0 for selecting zero windows
+
+        for (int j = 1; j <= k; j++) {
+
+            Arrays.fill(curr, INF);
+
+            for (int i = 1; i <= n; i++) {
+
+                // Option 1: Skip current element
+                curr[i] = curr[i - 1];
+
+                // Option 2: Select a window ending at i - 1
+                if (i >= x && prev[i - x] != INF) {
+
+                    long take =
+                        prev[i - x] + cost[i - x];
+
+                    curr[i] = Math.min(curr[i], take);
+                }
+            }
+
+            long[] temp = prev;
+            prev = curr;
+            curr = temp;
+        }
+
+        return prev[n];
+    }
+}
