@@ -1,0 +1,73 @@
+
+import java.util.*;
+
+class Solution {
+
+    int[] bit;
+    int n;
+
+    public List<Integer> countSmaller(int[] nums) {
+
+        n = nums.length;
+
+        // Coordinate compression
+        int[] sorted = nums.clone();
+        Arrays.sort(sorted);
+
+        // Remove duplicates
+        int size = 0;
+
+        for (int x : sorted) {
+            if (size == 0 || sorted[size - 1] != x) {
+                sorted[size++] = x;
+            }
+        }
+
+        bit = new int[size + 1];
+
+        Integer[] result = new Integer[n];
+
+        // Traverse from right to left
+        for (int i = n - 1; i >= 0; i--) {
+
+            // Find compressed rank (1-based)
+            int rank = Arrays.binarySearch(
+                sorted, 0, size, nums[i]
+            ) + 1;
+
+            // Count smaller elements
+            result[i] = query(rank - 1);
+
+            // Insert current element
+            update(rank);
+        }
+
+        return Arrays.asList(result);
+    }
+
+    // Update Fenwick Tree
+    private void update(int index) {
+
+        while (index < bit.length) {
+
+            bit[index]++;
+
+            index += index & -index;
+        }
+    }
+
+    // Get prefix frequency sum
+    private int query(int index) {
+
+        int sum = 0;
+
+        while (index > 0) {
+
+            sum += bit[index];
+
+            index -= index & -index;
+        }
+
+        return sum;
+    }
+}
