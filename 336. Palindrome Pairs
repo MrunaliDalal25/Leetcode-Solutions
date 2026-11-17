@@ -1,0 +1,189 @@
+
+import java.util.*;
+
+class Solution {
+
+    static class TrieNode {
+        TrieNode[] children = new TrieNode[26];
+        int wordIndex = -1;
+        List<Integer> palindromeIndices = new ArrayList<>();
+    }
+
+    private TrieNode root = new TrieNode();
+
+    public List<List<Integer>> palindromePairs(String[] words) {
+
+        root = new TrieNode();
+
+        // Step 1: Insert all words in reverse order
+        for (int i = 0; i < words.length; i++) {
+            insert(words[i], i);
+        }
+
+        // Step 2: Search for palindrome pairs
+        List<List<Integer>> result = new ArrayList<>();
+
+        for (int i = 0; i < words.length; i++) {
+            search(words[i], i, result);
+        }
+
+        return result;
+    }
+
+    private void insert(String word, int index) {
+
+        int n = word.length();
+
+        boolean[] prefixPal = new boolean[n];
+
+        getPalindromeInfo(word, prefixPal, null);
+
+        TrieNode node = root;
+
+        for (int j = n - 1; j >= 0; j--) {
+
+            // Remaining prefix is palindrome
+            if (prefixPal[j]) {
+                node.palindromeIndices.add(index);
+            }
+
+            int c = word.charAt(j) - 'a';
+
+            if (node.children[c] == null) {
+                node.children[c] = new TrieNode();
+            }
+
+            node = node.children[c];
+        }
+
+        node.wordIndex = index;
+        node.palindromeIndices.add(index);
+    }
+
+    private void search(
+        String word,
+        int index,
+        List<List<Integer>> result
+    ) {
+
+        int n = word.length();
+
+        boolean[] suffixPal = new boolean[n];
+
+        getPalindromeInfo(word, null, suffixPal);
+
+        TrieNode node = root;
+
+        for (int j = 0; j < n; j++) {
+
+            // Remaining suffix is palindrome
+            // and a matching reversed word exists
+            if (node.wordIndex != -1 &&
+                node.wordIndex != index &&
+                suffixPal[j]) {
+
+                result.add(Arrays.asList(
+                    index, node.wordIndex
+                ));
+            }
+
+            int c = word.charAt(j) - 'a';
+
+            node = node.children[c];
+
+            if (node == null) {
+                return;
+            }
+        }
+
+        // Remaining trie words have palindromic prefixes
+        for (int other : node.palindromeIndices) {
+
+            if (other != index) {
+                result.add(Arrays.asList(index, other));
+            }
+        }
+    }
+
+    // Manacher's algorithm:
+    // Computes palindrome prefixes and suffixes in O(n)
+    private void getPalindromeInfo(
+        String s,
+        boolean[] prefixPal,
+        boolean[] suffixPal
+    ) {
+
+        int n = s.length();
+
+        int[] odd = new int[n];
+        int[] even = new int[n];
+
+        // Odd-length palindromes
+        int l = 0, r = -1;
+
+        for (int i = 0; i < n; i++) {
+
+            int k = (i > r) ? 1 :
+                Math.min(odd[l + r - i], r - i + 1);
+
+            while (i - k >= 0 && i + k < n &&
+                   s.charAt(i - k) == s.charAt(i + k)) {
+                k++;
+            }
+
+            odd[i] = k;
+
+            int left = i - k + 1;
+            int right = i + k - 1;
+
+            if (prefixPal != null && left == 0) {
+                prefixPal[right] = true;
+            }
+
+            if (suffixPal != null && right == n - 1) {
+                suffixPal[left] = true;
+            }
+
+            if (right > r) {
+                l = left;
+                r = right;
+            }
+        }
+
+        // Even-length palindromes
+        l = 0;
+        r = -1;
+
+        for (int i = 0; i < n; i++) {
+
+            int k = (i > r) ? 0 :
+                Math.min(even[l + r - i + 1], r - i + 1);
+
+            while (i - k - 1 >= 0 && i + k < n &&
+                   s.charAt(i - k - 1) == s.charAt(i + k)) {
+                k++;
+            }
+
+            even[i] = k;
+
+            if (k > 0) {
+
+                int left = i - k;
+                int right = i + k - 1;
+
+                if (prefixPal != null && left == 0) {
+                    prefixPal[right] = true;
+                }
+
+                if (suffixPal != null && right == n - 1) {
+                    suffixPal[left] = true;
+                }
+            }
+
+            if (i + k - 1 > r) {
+                l = i - k;
+                r = i + k - 1;
+            }
+        }
+    }
+}
