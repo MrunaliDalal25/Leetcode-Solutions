@@ -1,0 +1,30 @@
+
+class Solution {
+
+    public boolean canConstruct(String ransomNote, String magazine) {
+
+        int[] freq = new int[26];
+
+        // Step 1: Count magazine characters
+        for (char ch : magazine.toCharArray()) {
+            freq[ch - 'a']++;
+        }
+
+        // Step 2: Check ransomNote characters
+        for (char ch : ransomNote.toCharArray()) {
+
+            int index = ch - 'a';
+
+            // Character not available
+            if (freq[index] == 0) {
+                return false;
+            }
+
+            // Use the character once
+            freq[index]--;
+        }
+
+        // All characters successfully used
+        return true;
+    }
+}
