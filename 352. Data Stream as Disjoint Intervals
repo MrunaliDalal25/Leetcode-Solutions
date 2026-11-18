@@ -1,0 +1,84 @@
+
+import java.util.*;
+
+class SummaryRanges {
+
+    private TreeMap<Integer, Integer> map;
+
+    public SummaryRanges() {
+        map = new TreeMap<>();
+    }
+
+    public void addNum(int value) {
+
+        // Find interval on the left
+        Map.Entry<Integer, Integer> left =
+            map.floorEntry(value);
+
+        // Find interval on the right
+        Map.Entry<Integer, Integer> right =
+            map.ceilingEntry(value);
+
+        // Already present in an existing interval
+        if (left != null && left.getValue() >= value) {
+            return;
+        }
+
+        boolean mergeLeft =
+            left != null && left.getValue() + 1 == value;
+
+        boolean mergeRight =
+            right != null && value + 1 == right.getKey();
+
+        // Case 1: Merge both intervals
+        if (mergeLeft && mergeRight) {
+
+            int start = left.getKey();
+            int end = right.getValue();
+
+            map.put(start, end);
+
+            map.remove(right.getKey());
+        }
+
+        // Case 2: Extend left interval
+        else if (mergeLeft) {
+
+            map.put(left.getKey(), value);
+        }
+
+        // Case 3: Extend right interval
+        else if (mergeRight) {
+
+            int end = right.getValue();
+
+            map.remove(right.getKey());
+
+            map.put(value, end);
+        }
+
+        // Case 4: Create a new interval
+        else {
+
+            map.put(value, value);
+        }
+    }
+
+    public int[][] getIntervals() {
+
+        int[][] result = new int[map.size()][2];
+
+        int index = 0;
+
+        for (Map.Entry<Integer, Integer> entry :
+             map.entrySet()) {
+
+            result[index][0] = entry.getKey();
+            result[index][1] = entry.getValue();
+
+            index++;
+        }
+
+        return result;
+    }
+}
