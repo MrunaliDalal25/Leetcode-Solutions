@@ -1,0 +1,43 @@
+
+class Solution {
+    public String removeKdigits(String num, int k) {
+
+        StringBuilder stack = new StringBuilder();
+
+        for (int i = 0; i < num.length(); i++) {
+
+            char digit = num.charAt(i);
+
+            // Remove larger previous digits
+            while (k > 0 &&
+                   stack.length() > 0 &&
+                   stack.charAt(stack.length() - 1) > digit) {
+
+                stack.deleteCharAt(stack.length() - 1);
+                k--;
+            }
+
+            // Add current digit
+            stack.append(digit);
+        }
+
+        // Remove remaining digits from the end
+        while (k > 0) {
+            stack.deleteCharAt(stack.length() - 1);
+            k--;
+        }
+
+        // Remove leading zeros
+        int index = 0;
+
+        while (index < stack.length() &&
+               stack.charAt(index) == '0') {
+            index++;
+        }
+
+        String result = stack.substring(index);
+
+        // Handle empty result
+        return result.isEmpty() ? "0" : result;
+    }
+}
