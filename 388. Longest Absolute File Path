@@ -1,0 +1,37 @@
+
+class Solution {
+    public int lengthLongestPath(String input) {
+
+        String[] lines = input.split("\n");
+
+        // Store cumulative path length at each depth
+        int[] pathLength = new int[lines.length + 1];
+
+        int maxLength = 0;
+
+        for (String line : lines) {
+
+            // Find directory depth
+            int depth = line.lastIndexOf('\t') + 1;
+
+            // Remove tab characters
+            String name = line.substring(depth);
+
+            // Calculate current absolute path length
+            int currentLength = pathLength[depth] + name.length();
+
+            // Check whether current entry is a file
+            if (name.contains(".")) {
+
+                maxLength = Math.max(maxLength, currentLength);
+
+            } else {
+
+                // Store path length for child directories
+                pathLength[depth + 1] = currentLength + 1;
+            }
+        }
+
+        return maxLength;
+    }
+}
