@@ -1,0 +1,38 @@
+
+class Solution {
+
+    public int longestSubstring(String s, int k) {
+        return solve(s, 0, s.length(), k);
+    }
+
+    private int solve(String s, int start, int end, int k) {
+
+        // Not enough characters to form a valid substring
+        if (end - start < k) {
+            return 0;
+        }
+
+        int[] freq = new int[26];
+
+        // Count character frequencies
+        for (int i = start; i < end; i++) {
+            freq[s.charAt(i) - 'a']++;
+        }
+
+        // Find characters occurring fewer than k times
+        for (int i = start; i < end; i++) {
+
+            if (freq[s.charAt(i) - 'a'] < k) {
+
+                int left = solve(s, start, i, k);
+
+                int right = solve(s, i + 1, end, k);
+
+                return Math.max(left, right);
+            }
+        }
+
+        // Every character occurs at least k times
+        return end - start;
+    }
+}
