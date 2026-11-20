@@ -1,0 +1,80 @@
+
+import java.util.*;
+
+class RandomizedCollection {
+
+    private List<Integer> list;
+    private Map<Integer, Set<Integer>> map;
+    private Random random;
+
+    public RandomizedCollection() {
+        list = new ArrayList<>();
+        map = new HashMap<>();
+        random = new Random();
+    }
+
+    public boolean insert(int val) {
+
+        // Check whether value already exists
+        boolean notPresent = !map.containsKey(val);
+
+        // Create a set if value is new
+        map.putIfAbsent(val, new HashSet<>());
+
+        // Store the index of the new occurrence
+        map.get(val).add(list.size());
+
+        // Add value to the list
+        list.add(val);
+
+        return notPresent;
+    }
+
+    public boolean remove(int val) {
+
+        // Value does not exist
+        if (!map.containsKey(val)) {
+            return false;
+        }
+
+        // Get any one occurrence of val
+        int removeIndex = map.get(val).iterator().next();
+
+        // Get last element and its index
+        int lastIndex = list.size() - 1;
+        int lastValue = list.get(lastIndex);
+
+        // Remove the selected occurrence
+        map.get(val).remove(removeIndex);
+
+        // Replace removed position with last element
+        if (removeIndex != lastIndex) {
+
+            // Remove old index of last element
+            map.get(lastValue).remove(lastIndex);
+
+            // Move last element into deleted position
+            list.set(removeIndex, lastValue);
+
+            // Update its new index
+            map.get(lastValue).add(removeIndex);
+        }
+
+        // Remove last element from list
+        list.remove(lastIndex);
+
+        // Remove map entry if no occurrences remain
+        if (map.get(val).isEmpty()) {
+            map.remove(val);
+        }
+
+        return true;
+    }
+
+    public int getRandom() {
+
+        int index = random.nextInt(list.size());
+
+        return list.get(index);
+    }
+}
