@@ -1,0 +1,42 @@
+
+import java.util.*;
+
+class Solution {
+    public int numberOfBoomerangs(int[][] points) {
+
+        int result = 0;
+        int n = points.length;
+
+        // Consider every point as the reference point
+        for (int i = 0; i < n; i++) {
+
+            Map<Long, Integer> map = new HashMap<>();
+
+            // Calculate distance from reference point
+            for (int j = 0; j < n; j++) {
+
+                if (i == j) {
+                    continue;
+                }
+
+                long dx = points[i][0] - points[j][0];
+                long dy = points[i][1] - points[j][1];
+
+                long distance = dx * dx + dy * dy;
+
+                // Count points having the same distance
+                map.put(
+                    distance,
+                    map.getOrDefault(distance, 0) + 1
+                );
+            }
+
+            // Calculate ordered pairs
+            for (int count : map.values()) {
+                result += count * (count - 1);
+            }
+        }
+
+        return result;
+    }
+}
