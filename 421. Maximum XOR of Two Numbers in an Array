@@ -1,0 +1,43 @@
+
+class Solution {
+    public int findMaximumXOR(int[] nums) {
+
+        int maxXor = 0;
+        int mask = 0;
+
+        for (int i = 30; i >= 0; i--) {
+
+            // Include the current bit
+            mask |= (1 << i);
+
+            Set<Integer> prefixes = new HashSet<>();
+
+            // Store all prefixes
+            for (int num : nums) {
+                prefixes.add(num & mask);
+            }
+
+            // Try setting the current bit
+            int candidate = maxXor | (1 << i);
+
+            boolean found = false;
+
+            for (int prefix : prefixes) {
+
+                // Check if required partner exists
+                int required = prefix ^ candidate;
+
+                if (prefixes.contains(required)) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found) {
+                maxXor = candidate;
+            }
+        }
+
+        return maxXor;
+    }
+}
