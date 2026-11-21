@@ -1,0 +1,102 @@
+
+import java.util.*;
+
+class Solution {
+    public int[] findSubtreeSizes(int[] parent, String s) {
+        int n = parent.length;
+
+        // Build original tree
+        int[] head = new int[n];
+        Arrays.fill(head, -1);
+
+        int[] to = new int[n - 1];
+        int[] next = new int[n - 1];
+
+        int edge = 0;
+
+        for (int i = 1; i < n; i++) {
+            int p = parent[i];
+
+            to[edge] = i;
+            next[edge] = head[p];
+            head[p] = edge++;
+        }
+
+        // Track nearest ancestor for each character
+        int[] last = new int[26];
+        Arrays.fill(last, -1);
+
+        int[] previous = new int[n];
+        int[] stack = new int[2 * n];
+
+        int top = 0;
+        stack[top++] = 0;
+
+        // First DFS: Modify parents using original tree
+        while (top > 0) {
+            int event = stack[--top];
+
+            if (event >= 0) {
+                int node = event;
+                int ch = s.charAt(node) - 'a';
+
+                previous[node] = last[ch];
+
+                if (node != 0 && last[ch] != -1) {
+                    parent[node] = last[ch];
+                }
+
+                last[ch] = node;
+
+                // Exit event
+                stack[top++] = ~node;
+
+                // Visit original children
+                for (int e = head[node]; e != -1; e = next[e]) {
+                    stack[top++] = to[e];
+                }
+
+            } else {
+                int node = ~event;
+                int ch = s.charAt(node) - 'a';
+
+                last[ch] = previous[node];
+            }
+        }
+
+        // Build modified tree
+        Arrays.fill(head, -1);
+        edge = 0;
+
+        for (int i = 1; i < n; i++) {
+            int p = parent[i];
+
+            to[edge] = i;
+            next[edge] = head[p];
+            head[p] = edge++;
+        }
+
+        int[] order = new int[n];
+        top = 0;
+
+        order[top++] = 0;
+
+        for (int i = 0; i < top; i++) {
+            int node = order[i];
+
+            for (int e = head[node]; e != -1; e = next[e]) {
+                order[top++] = to[e];
+            }
+        }
+
+        int[] answer = new int[n];
+        Arrays.fill(answer, 1);
+
+        for (int i = n - 1; i > 0; i--) {
+            int node = order[i];
+            answer[parent[node]] += answer[node];
+        }
+
+        return answer;
+    }
+}
