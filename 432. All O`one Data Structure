@@ -1,0 +1,120 @@
+import java.util.*;
+
+class AllOne {
+
+    // Your Node class
+    class Node {
+        int count;
+        Set<String> keys;
+        Node prev, next;
+
+        Node(int count) {
+            this.count = count;
+            this.keys = new HashSet<>();
+        }
+    }
+
+    private Node head, tail;
+    private Map<String, Node> keyMap;
+
+    public AllOne() {
+        head = new Node(0);
+        tail = new Node(0);
+
+        head.next = tail;
+        tail.prev = head;
+
+        keyMap = new HashMap<>();
+    }
+
+    private Node insertAfter(Node prev, int count) {
+        Node node = new Node(count);
+
+        node.next = prev.next;
+        node.prev = prev;
+
+        prev.next.prev = node;
+        prev.next = node;
+
+        return node;
+    }
+
+    private void removeNode(Node node) {
+        node.prev.next = node.next;
+        node.next.prev = node.prev;
+    }
+
+    public void inc(String key) {
+        if (!keyMap.containsKey(key)) {
+            Node first = head.next;
+
+            if (first == tail || first.count != 1) {
+                first = insertAfter(head, 1);
+            }
+
+            first.keys.add(key);
+            keyMap.put(key, first);
+
+        } else {
+            Node current = keyMap.get(key);
+            int newCount = current.count + 1;
+
+            Node next = current.next;
+
+            if (next == tail || next.count != newCount) {
+                next = insertAfter(current, newCount);
+            }
+
+            next.keys.add(key);
+            keyMap.put(key, next);
+
+            current.keys.remove(key);
+
+            if (current.keys.isEmpty()) {
+                removeNode(current);
+            }
+        }
+    }
+
+    public void dec(String key) {
+        Node current = keyMap.get(key);
+
+        if (current.count == 1) {
+            current.keys.remove(key);
+            keyMap.remove(key);
+
+        } else {
+            int newCount = current.count - 1;
+            Node prev = current.prev;
+
+            if (prev == head || prev.count != newCount) {
+                prev = insertAfter(current.prev, newCount);
+            }
+
+            prev.keys.add(key);
+            keyMap.put(key, prev);
+
+            current.keys.remove(key);
+        }
+
+        if (current.keys.isEmpty()) {
+            removeNode(current);
+        }
+    }
+
+    public String getMaxKey() {
+        if (tail.prev == head) {
+            return "";
+        }
+
+        return tail.prev.keys.iterator().next();
+    }
+
+    public String getMinKey() {
+        if (head.next == tail) {
+            return "";
+        }
+
+        return head.next.keys.iterator().next();
+    }
+}
