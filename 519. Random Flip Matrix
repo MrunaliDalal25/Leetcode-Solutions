@@ -1,0 +1,44 @@
+
+import java.util.*;
+
+class Solution {
+
+    private int m, n;
+    private int remaining;
+    private Map<Integer, Integer> map;
+    private Random random;
+
+    public Solution(int m, int n) {
+        this.m = m;
+        this.n = n;
+        this.remaining = m * n;
+        this.map = new HashMap<>();
+        this.random = new Random();
+    }
+
+    public int[] flip() {
+
+        // Pick a random index from remaining cells
+        int r = random.nextInt(remaining);
+
+        // Get the actual index from the virtual mapping
+        int x = map.getOrDefault(r, r);
+
+        // Get the last available index
+        int last = remaining - 1;
+
+        // Move the last available element to position r
+        map.put(r, map.getOrDefault(last, last));
+
+        // One cell is no longer available
+        remaining--;
+
+        // Convert 1D index into 2D coordinates
+        return new int[]{x / n, x % n};
+    }
+
+    public void reset() {
+        remaining = m * n;
+        map.clear();
+    }
+}
