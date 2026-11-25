@@ -1,0 +1,33 @@
+
+import java.util.*;
+
+class Solution {
+    public int smallestUniqueSubarray(int[] nums) {
+        int n = nums.length;
+
+        for (int len = 1; len <= n; len++) {
+
+            Map<String, Integer> freq = new HashMap<>();
+
+            for (int i = 0; i <= n - len; i++) {
+                StringBuilder sb = new StringBuilder();
+
+                for (int j = i; j < i + len; j++) {
+                    sb.append(nums[j]).append(",");
+                }
+
+                String key = sb.toString();
+
+                freq.put(key, freq.getOrDefault(key, 0) + 1);
+            }
+
+            for (int count : freq.values()) {
+                if (count == 1) {
+                    return len;
+                }
+            }
+        }
+
+        return n;
+    }
+}
