@@ -1,0 +1,127 @@
+
+import java.util.*;
+
+class Solution {
+
+    public int maximumSaleItems(int[][] items, int budget) {
+
+        int n = items.length;
+
+        // Calculate benefit of each item:
+        // 1 purchased copy + free copies.
+        int[][] arr = new int[n][3];
+
+        for (int i = 0; i < n; i++) {
+
+            int free = 0;
+
+            for (int j = 0; j < n; j++) {
+
+                if (i != j &&
+                    items[j][0] % items[i][0] == 0) {
+                    free++;
+                }
+            }
+
+            arr[i][0] = items[i][0];
+            arr[i][1] = items[i][1];
+            arr[i][2] = free + 1;
+        }
+
+        // Sort by price in descending order.
+        Arrays.sort(arr, (a, b) ->
+            Integer.compare(b[1], a[1])
+        );
+
+        final int NEG = -1000000000;
+
+        // dp[c] = maximum benefit using items
+        // processed so far with exact cost c.
+        int[] dp = new int[budget + 1];
+        Arrays.fill(dp, NEG);
+        dp[0] = 0;
+
+        int answer = 0;
+        int start = 0;
+
+        while (start < n) {
+
+            int price = arr[start][1];
+            int end = start;
+
+            // Find items having the same price.
+            while (end < n &&
+                   arr[end][1] == price) {
+                end++;
+            }
+
+            if (price <= budget) {
+
+                // Must select at least one item
+                // from the current price group.
+                int[] cur = new int[budget + 1];
+                Arrays.fill(cur, NEG);
+
+                // 0/1 Knapsack.
+                for (int i = start; i < end; i++) {
+
+                    int value = arr[i][2];
+
+                    for (int c = budget; c >= price; c--) {
+
+                        // Select first item from this group.
+                        if (dp[c - price] != NEG) {
+                            cur[c] = Math.max(
+                                cur[c],
+                                dp[c - price] + value
+                            );
+                        }
+
+                        // Select another item from this group.
+                        if (cur[c - price] != NEG) {
+                            cur[c] = Math.max(
+                                cur[c],
+                                cur[c - price] + value
+                            );
+                        }
+                    }
+                }
+
+                // Calculate total items including
+                // additional copies of cheapest item.
+                for (int c = 0; c <= budget; c++) {
+
+                    if (cur[c] != NEG) {
+
+                        int extra = (budget - c) / price;
+
+                        answer = Math.max(
+                            answer,
+                            cur[c] + extra
+                        );
+                    }
+                }
+
+                // Update DP for the next price group.
+                for (int i = start; i < end; i++) {
+
+                    int value = arr[i][2];
+
+                    for (int c = budget; c >= price; c--) {
+
+                        if (dp[c - price] != NEG) {
+                            dp[c] = Math.max(
+                                dp[c],
+                                dp[c - price] + value
+                            );
+                        }
+                    }
+                }
+            }
+
+            start = end;
+        }
+
+        return answer;
+    }
+}
